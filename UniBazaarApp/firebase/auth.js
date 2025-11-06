@@ -1,26 +1,26 @@
 // firebase/auth.js
 import { createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword } from "firebase/auth";
-import app from "../firebaseConfig"; // 连接到你刚才创建的 firebaseConfig.js
+import app from "../firebaseConfig"; // connect to firebaseConfig.js
 
 const auth = getAuth(app);
 
-// 注册新用户
+// sign in your account
 export const signUp = async (email, password) => {
   try {
     await createUserWithEmailAndPassword(auth, email, password);
-    console.log("✅ 注册成功");
+    console.log("Sign In Successful");
   } catch (error) {
-    console.error("❌ 注册失败:", error.message);
+    console.error("Fail to Sign In:", error.message);
   }
 };
 
-// 登录现有用户
+// login your account
 export const signIn = async (email, password) => {
   try {
     await signInWithEmailAndPassword(auth, email, password);
-    console.log("✅ 登录成功");
+    console.log("Login successful");
   } catch (error) {
-    console.error("❌ 登录失败:", error.message);
+    console.error("Fail to Login:", error.message);
   }
 };
 

@@ -10,7 +10,7 @@ export default function TestAuth() {
   const handleSignUp = async () => {
     try {
       await signUp(email, password);
-      setMessage("注册成功！");
+      setMessage("Sign In Successful！");
     } catch (err) {
       setMessage(err.message);
     }
@@ -19,7 +19,7 @@ export default function TestAuth() {
   const handleSignIn = async () => {
     try {
       await signIn(email, password);
-      setMessage("登录成功！");
+      setMessage("Login Successful！");
     } catch (err) {
       setMessage(err.message);
     }
@@ -32,7 +32,7 @@ export default function TestAuth() {
         style={{ borderWidth: 1, padding: 8, marginBottom: 10 }}
         value={email}
         onChangeText={setEmail}
-        placeholder="输入邮箱"
+        placeholder="Text your Email"
       />
       <Text>Password:</Text>
       <TextInput
@@ -40,10 +40,10 @@ export default function TestAuth() {
         value={password}
         onChangeText={setPassword}
         secureTextEntry
-        placeholder="输入密码"
+        placeholder="Text your Password"
       />
-      <Button title="注册" onPress={handleSignUp} />
-      <Button title="登录" onPress={handleSignIn} />
+      <Button title="Sign In" onPress={handleSignUp} />
+      <Button title="Login" onPress={handleSignIn} />
       <Text style={{ marginTop: 20 }}>{message}</Text>
     </View>
   );
