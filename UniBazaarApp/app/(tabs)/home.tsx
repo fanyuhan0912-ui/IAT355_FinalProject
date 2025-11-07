@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, FlatList, Image, ActivityIndicator, TouchableOpacity } from "react-native";
-import { db } from "../../firebase/firebaseConfig"; 
+import { db } from "../../firebase/firebaseConfig";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 
 type Item = {
@@ -58,7 +58,7 @@ export default function HomeScreen() {
     <TouchableOpacity
       activeOpacity={0.75}
       style={{
-        padding: 12,
+        padding: 14,
         borderBottomWidth: 1,
         borderColor: "#eee",
         flexDirection: "row",
@@ -103,12 +103,17 @@ export default function HomeScreen() {
     </TouchableOpacity>
   );
 
+
+
+
   return (
     <FlatList
       data={items}
       keyExtractor={(it) => it.id}
       renderItem={renderItem}
-      contentContainerStyle={{ paddingBottom: 24 }}
+      contentContainerStyle={{
+          paddingTop:100,
+          paddingBottom: 24 }}
     />
   );
 }
