@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, Button, Alert, ScrollView, Image } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import { auth, db } from "../../firebase/firebaseConfig";
 import { addDoc, collection } from "firebase/firestore";
 
@@ -7,33 +8,58 @@ export default function AddScreen() {
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState<string>("");
   const [description, setDescription] = useState("");
-  const [imageUrl, setImageUrl] = useState(""); // copy GitHub Raw/Imgur link
+  const [imageUri, setImageUri] = useState<string | null>(null); 
   const [submitting, setSubmitting] = useState(false);
 
+  // 选相册
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission needed", "We need access to your photos.");
+      return;
+    }
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+    });
+    if (!res.canceled) {
+      setImageUri(res.assets[0].uri);
+    }
+  };
+
+  // 拍照
+  const takePhoto = async () => {
+    const cam = await ImagePicker.requestCameraPermissionsAsync();
+    if (cam.status !== "granted") {
+      Alert.alert("Permission needed", "We need access to your camera.");
+      return;
+    }
+    const res = await ImagePicker.launchCameraAsync({ quality: 0.8 });
+    if (!res.canceled) {
+      setImageUri(res.assets[0].uri);
+    }
+  };
+
   const submit = async () => {
-    // check
-    if (!title.trim()) return Alert.alert("Please fill out all the text box", "Title is required");
-    if (!price.trim() || isNaN(Number(price))) return Alert.alert("Please fill out all the text box", "Price is required");
-    // imageUrl keep a space，Home will show it “No Image”
+    if (!title.trim()) return Alert.alert("lack of the text", "Title is required");
+    if (!price.trim() || isNaN(Number(price))) return Alert.alert("缺少字段", "Price is required");
 
     try {
       setSubmitting(true);
+
+
       await addDoc(collection(db, "items"), {
         title: title.trim(),
         price: Number(price),
         description: description.trim(),
-        imageUrl: imageUrl.trim(),
+        imageUrl: imageUri ?? "",
         sellerId: auth?.currentUser?.uid || "anon",
-        createdAt: Date.now(), //need to be same sequence with the home page
+        createdAt: Date.now(),
       });
 
       setSubmitting(false);
       Alert.alert("Success", "Item posted!");
-      // clear list
-      setTitle("");
-      setPrice("");
-      setDescription("");
-      setImageUrl("");
+      setTitle(""); setPrice(""); setDescription(""); setImageUri(null);
     } catch (e: any) {
       setSubmitting(false);
       console.error(e);
@@ -42,12 +68,7 @@ export default function AddScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={{
-        paddingTop:100,
-        padding: 16,
-        backgroundColor: "#fff",
-        flexGrow: 1
-        }}>
+    <ScrollView contentContainerStyle={{ padding: 16, backgroundColor: "#fff", flexGrow: 1 }}>
       <Text style={{ fontSize: 18, fontWeight: "700", marginBottom: 12 }}>Post a new item</Text>
 
       <Text>Title</Text>
@@ -76,20 +97,15 @@ export default function AddScreen() {
         style={{ borderWidth: 1, borderColor: "#ccc", borderRadius: 8, padding: 10, height: 90, marginTop: 6, marginBottom: 12 }}
       />
 
-      <Text>Image URL (optional)</Text>
-      <TextInput
-        value={imageUrl}
-        onChangeText={setImageUrl}
-        placeholder="https://raw.githubusercontent.com/<user>/<repo>/main/assets/images/xxx.jpg"
-        autoCapitalize="none"
-        autoCorrect={false}
-        style={{ borderWidth: 1, borderColor: "#ccc", borderRadius: 8, padding: 10, marginTop: 6, marginBottom: 12 }}
-      />
-
-      {/* view it after we add the URL） */}
-      {imageUrl ? (
-        <Image source={{ uri: imageUrl }} style={{ width: "100%", height: 200, borderRadius: 12, marginBottom: 12 }} />
+      {/* view*/}
+      {imageUri ? (
+        <Image source={{ uri: imageUri }} style={{ width: "100%", height: 220, borderRadius: 12, marginBottom: 12 }} />
       ) : null}
+
+      <View style={{ gap: 8, marginBottom: 16 }}>
+        <Button title="Choose from library" onPress={pickImage} />
+        <Button title="Take a photo" onPress={takePhoto} />
+      </View>
 
       <Button title={submitting ? "Posting..." : "Post item"} onPress={submit} disabled={submitting} />
     </ScrollView>
