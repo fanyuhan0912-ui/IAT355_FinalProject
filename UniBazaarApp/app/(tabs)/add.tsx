@@ -12,8 +12,8 @@ export default function AddScreen() {
 
   const submit = async () => {
     // check
-    if (!title.trim()) return Alert.alert("缺少字段", "Title 必填");
-    if (!price.trim() || isNaN(Number(price))) return Alert.alert("缺少字段", "Price 必须是数字");
+    if (!title.trim()) return Alert.alert("Please fill out all the text box", "Title is required");
+    if (!price.trim() || isNaN(Number(price))) return Alert.alert("Please fill out all the text box", "Price is required");
     // imageUrl keep a space，Home will show it “No Image”
 
     try {
@@ -42,7 +42,12 @@ export default function AddScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, backgroundColor: "#fff", flexGrow: 1 }}>
+    <ScrollView contentContainerStyle={{
+        paddingTop:100,
+        padding: 16,
+        backgroundColor: "#fff",
+        flexGrow: 1
+        }}>
       <Text style={{ fontSize: 18, fontWeight: "700", marginBottom: 12 }}>Post a new item</Text>
 
       <Text>Title</Text>
