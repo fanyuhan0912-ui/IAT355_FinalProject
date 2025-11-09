@@ -79,7 +79,7 @@ export default function AddScreen() {
   const [imageUri, setImageUri] = useState<string | null>(null); // file:// 或 asset://
   const [submitting, setSubmitting] = useState(false);
 
-  // 载入草稿
+
   useEffect(() => {
     (async () => {
       try {
@@ -95,7 +95,14 @@ export default function AddScreen() {
     })();
   }, []);
 
-  // 自动保存草稿
+  useEffect(() => {
+    const clearDraft = async () => {
+      await AsyncStorage.removeItem("draftItem");
+    };
+    clearDraft();
+  }, []);
+
+
   useEffect(() => {
     const draft = JSON.stringify({ title, price, description, imageUri });
     AsyncStorage.setItem(DRAFT_KEY, draft).catch(() => {});
@@ -137,7 +144,7 @@ export default function AddScreen() {
         title: title.trim(),
         price: Number(price),
         description: description.trim(),
-        imageUrl: imageUri ?? "", // 同机可见的 file://；若用 GitHub Raw/Imgur 可直接填其链接
+        imageUrl: imageUri ?? "",
         sellerId: auth?.currentUser?.uid || "anon",
         createdAt: Date.now(),
       });
@@ -165,7 +172,7 @@ export default function AddScreen() {
     >
       <ScrollView
         contentContainerStyle={{
-          paddingTop: 60, // 整体离顶部距离
+          paddingTop: 60, 
           paddingHorizontal: 16,
           paddingBottom: 24,
         }}
