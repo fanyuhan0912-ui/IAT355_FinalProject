@@ -8,8 +8,8 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: true,
-        tabBarActiveTintColor: "#2E86DE",
-        tabBarInactiveTintColor: "#95A5A6",
+        tabBarActiveTintColor: "#234594",
+        tabBarInactiveTintColor: "#9db2e5",
       }}
     >
       {/*  Home */}
@@ -52,7 +52,7 @@ export default function TabLayout() {
                   width: 70,
                   height: 70,
                   borderRadius: 35,
-                  backgroundColor: "#2E86DE",
+                  backgroundColor: "#234594",
                   justifyContent: "center",
                   alignItems: "center",
                   shadowColor: "#000",
