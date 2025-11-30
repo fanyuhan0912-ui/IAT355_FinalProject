@@ -11,7 +11,7 @@ import {
 } from "react-native";
 
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "../../../firebase/firebaseConfig";   // ⭐⭐ 你现在缺这个 ⭐⭐
+import { db } from "../../firebase/firebaseConfig";   // ⭐⭐ 你现在缺这个 ⭐⭐
 
 import { Ionicons } from "@expo/vector-icons";
 
