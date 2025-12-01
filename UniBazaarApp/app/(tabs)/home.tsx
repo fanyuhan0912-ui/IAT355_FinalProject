@@ -13,7 +13,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { db } from "../../firebase/firebaseConfig";
 import { collection, query, onSnapshot } from "firebase/firestore";
 import WeatherBanner from "../../components/WeatherBanner";
-import { useFavorites } from "../FavoritesContext"; // 修正了路径
+import { useFavorites } from "../FavoritesContext"; 
+import { auth } from "../../firebase/firebaseConfig";
+import { router } from "expo-router";
+import { Keyboard } from "react-native";
+
 
 // 本地分类图片（记得把这些图片放到对应路径）
 const CATEGORIES = [
@@ -45,7 +49,6 @@ const CATEGORIES = [
 ];
 
 
-
 type Item = {
   id: string;
   title?: string;
@@ -59,10 +62,21 @@ type Item = {
 };
 
 export default function HomeScreen() {
+  const [userName, setUserName] = useState("");
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
-  const { toggleFavorite, isFavorite } = useFavorites(); // 使用全局收藏夹
+  const { toggleFavorite, isFavorite } = useFavorites();
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+
+
+ // 读取当前登录用户的名字（来自 Firebase Auth.displayName）
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (user) {
+      setUserName(user.displayName || "");
+    }
+  }, []);
 
   // ========= 连接 Firestore =========
   useEffect(() => {
@@ -111,76 +125,108 @@ export default function HomeScreen() {
     );
   }
 
-  // 当前选中的分类名称（用来替换 All Items 文本）
-  const currentCategoryLabel =
-    CATEGORIES.find((c) => c.key === selectedCategory)?.label ||
-    "All Items";
+// 当前选中的分类名称（用来替换 All Items 文本）
+const currentCategoryLabel =
+  CATEGORIES.find((c) => c.key === selectedCategory)?.label || "All Items";
 
-  // 过滤出来要展示的 items
-  const displayedItems =
-    selectedCategory === "all"
-      ? items
-      : items.filter(
-          (item) =>
-            (item.category || "").toLowerCase() ===
-            selectedCategory.toLowerCase()
-        );
+// 先按分类过滤一轮
+const itemsByCategory =
+  selectedCategory === "all"
+    ? items
+    : items.filter(
+        (item) =>
+          (item.category || "").toLowerCase() ===
+          selectedCategory.toLowerCase()
+      );
+
+// 再按搜索关键词过滤（标题 / 描述里包含就算匹配）
+const displayedItems = itemsByCategory.filter((item) => {
+  const q = searchQuery.trim().toLowerCase();
+  if (!q) return true; // 🔹没输入搜索内容，就不过滤
+
+  const title = (item.title || "").toLowerCase();
+  const desc = (item.description || "").toLowerCase();
+
+  return title.includes(q) || desc.includes(q);
+});
+
+const handleSearch = () => {
+  console.log("Searching for:", searchQuery);
+
+  // 🔥 不需要专门写逻辑，因为你已经用 searchQuery 过滤了
+  // 这里只是关闭键盘效果
+  Keyboard.dismiss();
+};
+
 
   // ========= 渲染单个卡片 =========
-  const renderItem = ({ item }: { item: Item }) => {
-    const favorite = isFavorite(item.id);
-    const distance = item.distanceKm ?? 0.5; // 临时假数据
+ const renderItem = ({ item }: { item: Item }) => {
+  const favorite = isFavorite(item.id);
+  const distance = item.distanceKm ?? 0.5; // 临时假数据
 
-    return (
-      <View style={styles.shadowWrapper}>
-        <View style={styles.card}>
-          {/* 图片区域 */}
-          <View style={styles.imageWrapper}>
-            {item.imageUrl ? (
-              <Image
-                source={{ uri: item.imageUrl }}
-                style={styles.cardImage}
-                resizeMode="cover"
-              />
-            ) : (
-              <View style={[styles.cardImage, styles.noImageBox]}>
-                <Text style={styles.noImageText}>No Image</Text>
-              </View>
-            )}
+  // 点击卡片时跳转到 /item/[id]
+  const handleOpenDetail = () => {
+    router.push({
+      pathname: "/item/[id]",
+      params: { id: item.id },
+    });
+  };
 
-            {/* 右上角心形按钮（收藏占位） */}
-            <TouchableOpacity
-              style={styles.heartButton}
-              onPress={() => toggleFavorite(item)}
-              activeOpacity={0.8}
-            >
-              <Ionicons
-                name={favorite ? "heart" : "heart-outline"}
-                size={22}
-                color={favorite ? "#FF7E3E" : "#ffffff"}
-              />
-            </TouchableOpacity>
-          </View>
-
-          {/* 底部文字区域 */}
-          <View style={styles.cardBody}>
-            <Text style={styles.cardTitle} numberOfLines={1}>
-              {item.title || "(Untitled)"}
-            </Text>
-
-            {typeof item.price === "number" && (
-              <Text style={styles.price}>${item.price}</Text>
-            )}
-
-            <View style={styles.metaRow}>
-              <Ionicons name="location-sharp" size={14} color="#9ca3af" />
-              <Text style={styles.metaText}>{distance} km</Text>
+  return (
+    <TouchableOpacity
+      style={styles.shadowWrapper}
+      activeOpacity={0.9}
+      onPress={handleOpenDetail}   // ⭐ 点整个卡片进入详情
+    >
+      <View style={styles.card}>
+        {/* 图片区域 */}
+        <View style={styles.imageWrapper}>
+          {item.imageUrl ? (
+            <Image
+              source={{ uri: item.imageUrl }}
+              style={styles.cardImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={[styles.cardImage, styles.noImageBox]}>
+              <Text style={styles.noImageText}>No Image</Text>
             </View>
+          )}
+
+          {/* 右上角心形按钮（收藏） */}
+          <TouchableOpacity
+            style={styles.heartButton}
+            onPress={() => toggleFavorite(item)}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name={favorite ? "heart" : "heart-outline"}
+              size={22}
+              color={favorite ? "#FF7E3E" : "#ffffff"}
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* 底部文字区域 */}
+        <View style={styles.cardBody}>
+          <Text style={styles.cardTitle} numberOfLines={1}>
+            {item.title || "(Untitled)"}
+          </Text>
+
+          {typeof item.price === "number" && (
+            <Text style={styles.price}>${item.price}</Text>
+          )}
+
+          <View style={styles.metaRow}>
+            <Ionicons name="location-sharp" size={14} color="#9ca3af" />
+            <Text style={styles.metaText}>{distance} km</Text>
           </View>
         </View>
       </View>
-    );
-  };
+    </TouchableOpacity>
+  );
+};
+
 
   // ========= 整个页面布局 =========
   return (
@@ -188,7 +234,7 @@ export default function HomeScreen() {
       {/* 顶部：问候 + Weather */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.greetingText}>Hi, Carolyn.</Text>
+          <Text style={styles.greetingText}>Hi, {userName || "there"}.</Text>
           <Text style={styles.subGreeting}>Welcome to UniBrazzaar!</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
@@ -197,14 +243,26 @@ export default function HomeScreen() {
       </View>
 
       {/* 搜索栏 */}
-      <View style={styles.searchBar}>
-        <Ionicons name="search" size={18} color="#999" />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search for items..."
-          placeholderTextColor="#c9c9c9"
-        />
-      </View>
+     <View style={styles.searchBar}>
+  <Ionicons name="search" size={18} color="#999" />
+
+  <TextInput
+    style={styles.searchInput}
+    placeholder="Search for items..."
+    placeholderTextColor="#c9c9c9"
+    value={searchQuery}
+    onChangeText={setSearchQuery}
+    returnKeyType="search"          // ⬅️ 让键盘显示 "Search"
+    onSubmitEditing={handleSearch}  // ⬅️ 按 Return 时触发
+  />
+
+  {/* 右侧搜索按钮 */}
+  <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
+    <Text style={styles.searchButtonText}>Go</Text>
+  </TouchableOpacity>
+</View>
+
+
 
       {/* 分类 row：用图片 + 背景选中态 */}
       <View style={styles.categoryRow}>
@@ -338,29 +396,39 @@ const styles = StyleSheet.create({
   },
 
   /* Search bar */
-  searchBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    // backgroundColor: "#ffe4c6",
-    borderWidth: 1,
-    borderColor: "#FE8A0D",
 
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    marginBottom: 30,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-   
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 8,
-    fontSize: 14,
-    color: "#333",
-  },
+searchButton: {
+  backgroundColor: "#FE8A0D",   // 你的橙色
+  paddingHorizontal: 30,
+  paddingVertical: 8,
+  borderRadius: 10,
+  marginLeft: 8,
+},
+
+searchButtonText: {
+  color: "#fff",
+  fontWeight: "600",
+  fontSize: 13,
+},
+
+searchBar: {
+  flexDirection: "row",
+  alignItems: "center",
+  borderWidth: 1,
+  borderColor: "#FE8A0D",
+  borderRadius: 12,
+  paddingLeft:12,
+  paddingRight:4,
+  paddingVertical: 4,
+  marginBottom: 30,
+},
+searchInput: {
+  flex: 1,
+  marginLeft: 8,
+  fontSize: 14,
+  color: "#333",
+},
+
 
   /* Categories row */
   categoryRow: {
@@ -376,19 +444,21 @@ const styles = StyleSheet.create({
   },
   categoryButtonActive: {},
   categoryIconWrapper: {
-    width: 60,
-    height: 60,
+    width: 38,
+    height: 38,
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 4,
   },
   categoryIconWrapperActive: {
-    backgroundColor: "#E3F0FF", 
+    backgroundColor: "#c0dbfaff", 
+    width:50,
+    height:50,
   },
   categoryIcon: {
-    width: 50,
-    height: 50,
+    width: 38,
+    height: 38,
   },
   categoryLabel: {
     fontSize: 11,
