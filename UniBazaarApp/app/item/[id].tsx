@@ -11,7 +11,18 @@ import {
   Dimensions, // 用于获取屏幕宽度
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  serverTimestamp,
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+} from "firebase/firestore";
+
 import { db, auth } from "../../firebase/firebaseConfig";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -60,19 +71,21 @@ export default function ItemDetailScreen() {
           setItem(fetchedItem);
 
           // B. 根据商品中的 sellerId 获取卖家信息
-          const sellerDocRef = doc(db, "users", fetchedItem.sellerId);
+// B. 根据商品中的 sellerId 获取卖家信息
+          const sellerDocRef = doc(db, "presence", fetchedItem.sellerId);
           const sellerDocSnap = await getDoc(sellerDocRef);
 
           if (sellerDocSnap.exists()) {
             const sellerData = sellerDocSnap.data();
             setSeller({
               uid: sellerDocSnap.id,
-              fullName: sellerData.fullName || "UniBazaar User",
+              fullName: sellerData.displayName || "UniBazaar User",
               avatarUrl: sellerData.avatarUrl || null,
             });
           } else {
             setSeller({ uid: fetchedItem.sellerId, fullName: "UniBazaar User" });
           }
+
         }
       } catch (error) {
         console.error("Error fetching item details:", error);
@@ -85,8 +98,67 @@ export default function ItemDetailScreen() {
   }, [id]);
 
   // 🔹 点击「Chat with seller」的逻辑 (保留你的已有逻辑)
+  // 🔹 点击「Chat with seller」的逻辑
   const handleChatPress = async () => {
-    // ... 你的 handleChatPress 代码完全不变 ...
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      Alert.alert("Please log in", "You need to log in to chat with sellers.");
+      return;
+    }
+    if (!item) {
+      Alert.alert("Item not loaded", "Please wait for the item to load.");
+      return;
+    }
+
+    const userId = currentUser.uid;
+
+    // 不允许给自己发消息
+    if (userId === item.sellerId) {
+      Alert.alert("Notice", "You cannot chat with yourself.");
+      return;
+    }
+
+    try {
+      // 1️⃣ 先看看这个 buyer + seller + item 的 chat 是否已经存在
+      const chatsRef = collection(db, "chats");
+      const q = query(
+        chatsRef,
+        where("buyerId", "==", userId),
+        where("sellerId", "==", item.sellerId),
+        where("itemId", "==", item.id)
+      );
+
+      const snap = await getDocs(q);
+
+      let chatId: string;
+
+      if (!snap.empty) {
+        // 已经有聊天，直接用第一个
+        chatId = snap.docs[0].id;
+      } else {
+        // 2️⃣ 没有，就新建一个 chat 文档
+        const newChatRef = await addDoc(chatsRef, {
+          buyerId: userId,
+          sellerId: item.sellerId,
+          itemId: item.id,
+          itemTitle: item.title,
+          lastMessage: "",
+          lastMessageAt: serverTimestamp(),
+          createdAt: serverTimestamp(),
+        });
+
+        chatId = newChatRef.id;
+      }
+
+      // 3️⃣ 跳转到 chat 详情页面
+      router.push(`/chat/${chatId}`);
+      // 如果你的文件路径是 /app/(tabs)/chat/[id].tsx
+      // 那就改成：router.push(`/(tabs)/chat/${chatId}`);
+    } catch (err) {
+      console.error("Error entering chat:", err);
+      Alert.alert("Error", "Failed to open chat. Please try again later.");
+    }
   };
 
   // 🔹 点击卖家头像或名字 (新功能)

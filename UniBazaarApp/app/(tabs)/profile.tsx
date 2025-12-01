@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Image, SafeAreaView } from 'r
 import { Ionicons } from '@expo/vector-icons';
 import { auth } from '../../firebase/firebaseConfig';
 import { signOut } from 'firebase/auth';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 
 export default function ProfileScreen() {
 
@@ -11,9 +11,10 @@ export default function ProfileScreen() {
 
   const userName = user?.displayName || "User";
 
-  const handleNavigation = (path: string) => {
-    router.push(path);
-  };
+
+const handleNavigation = (path: Href) => {
+  router.push(path);
+};
 
   const handleLogout = async () => {
     try {
@@ -35,7 +36,8 @@ export default function ProfileScreen() {
 
         <TouchableOpacity 
             activeOpacity={0.8}
-            onPress={() => handleNavigation('profile_pages/userHomepage')}
+            onPress={() => handleNavigation('/profile_pages/userHomepage')}
+
         >
             <View style={styles.profileCard}>
                 <Image source={require('../../assets/images/chair.png')} style={styles.avatar} />
@@ -55,13 +57,13 @@ export default function ProfileScreen() {
             </View>
         </TouchableOpacity>
 
-<View style={styles.section}>
+<View style={styles.section1}>
         <Text style={styles.sectionTitle}>Buying</Text>
         <View style={styles.iconGrid}>
           <View style={styles.iconContainer}>
             <TouchableOpacity
               style={styles.iconButton}
-              onPress={() => handleNavigation('profile_pages/favourite')}>
+              onPress={() => handleNavigation('/profile_pages/favourite')}>
               <Ionicons name="heart-outline" size={28} color="#FF7E3E" />
             </TouchableOpacity>
             <Text style={styles.iconLabel}>Favourite</Text>
@@ -69,7 +71,7 @@ export default function ProfileScreen() {
           <View style={styles.iconContainer}>
             <TouchableOpacity
               style={styles.iconButton}
-              onPress={() => handleNavigation('profile_pages/purchased')}>
+              onPress={() => handleNavigation('/profile_pages/purchased')}>
               <Ionicons name="cart-outline" size={28} color="#FF7E3E" />
             </TouchableOpacity>
             <Text style={styles.iconLabel}>Purchased</Text>
@@ -77,7 +79,7 @@ export default function ProfileScreen() {
           <View style={styles.iconContainer}>
             <TouchableOpacity
               style={styles.iconButton}
-              onPress={() => handleNavigation('profile_pages/toReview')}>
+              onPress={() => handleNavigation('/profile_pages/toReview')}>
               <Ionicons name="chatbox-outline" size={28} color="#FF7E3E" />
             </TouchableOpacity>
             <Text style={styles.iconLabel}>To Review</Text>
@@ -85,13 +87,13 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      <View style={styles.section}>
+      <View style={styles.section2}>
         <Text style={styles.sectionTitle}>Selling</Text>
         <View style={styles.iconGrid}>
           <View style={styles.iconContainer}>
             <TouchableOpacity 
               style={styles.iconButton}
-              onPress={() => handleNavigation('profile_pages/sold')}>
+              onPress={() => handleNavigation('/profile_pages/sold')}>
               <Ionicons name="pricetag-outline" size={28} color="#FF7E3E" />
             </TouchableOpacity>
             <Text style={styles.iconLabel}>Sold</Text>
@@ -99,7 +101,7 @@ export default function ProfileScreen() {
           <View style={styles.iconContainer}>
             <TouchableOpacity 
               style={styles.iconButton}
-              onPress={() => handleNavigation('profile_pages/listed')}>
+              onPress={() => handleNavigation('/profile_pages/listed')}>
               <Ionicons name="cube-outline" size={28} color="#FF7E3E" />
             </TouchableOpacity>
             <Text style={styles.iconLabel}>Listed</Text>
@@ -107,7 +109,7 @@ export default function ProfileScreen() {
           <View style={styles.iconContainer}>
             <TouchableOpacity 
               style={styles.iconButton}
-              onPress={() => handleNavigation('profile_pages/viewMore')}>
+              onPress={() => handleNavigation('/profile_pages/viewMore')}>
               <Ionicons name="grid-outline" size={28} color="#FF7E3E" />
             </TouchableOpacity>
             <Text style={styles.iconLabel}>View more</Text>
@@ -182,8 +184,21 @@ const styles = StyleSheet.create({
     color: '#FE8A0D',
     fontSize: 14,
   },
-  section: {
-    backgroundColor: 'white',
+  section1: {
+    backgroundColor: '#E3F0FF',
+    borderRadius: 15,
+    padding: 20,
+    marginHorizontal: 20,
+    marginTop: 20,
+    width: '90%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  section2: {
+    backgroundColor: '#FFE7CF',
     borderRadius: 15,
     padding: 20,
     marginHorizontal: 20,
