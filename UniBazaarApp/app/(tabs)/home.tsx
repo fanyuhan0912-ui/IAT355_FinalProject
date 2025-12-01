@@ -360,13 +360,12 @@ function CategoryButton({
 /* 样式 */
 const CARD_BG = "#ffffff";
 const PAGE_BG = "#F5F5F5";
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: PAGE_BG,
     paddingHorizontal: 16,
-    paddingTop: 40,
+    paddingTop: 70,
   },
 
   center: {
@@ -382,7 +381,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 16,
+    marginBottom: 20,
   },
   greetingText: {
     fontSize: 20,
@@ -398,7 +397,7 @@ const styles = StyleSheet.create({
   /* Search bar */
 
 searchButton: {
-  backgroundColor: "#FE8A0D",   // 你的橙色
+  backgroundColor: "#FE8A0D",
   paddingHorizontal: 30,
   paddingVertical: 8,
   borderRadius: 10,
