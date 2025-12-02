@@ -35,9 +35,20 @@ export default function UserHomepageScreen() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [avatarKey, setAvatarKey] = useState<string>("avatar1"); // ⭐ 新增
+
   const [activeTab, setActiveTab] = useState<"items" | "reviews">("items");
   const [listedItems, setListedItems] = useState<any[]>([]);
   const user = auth.currentUser;
+
+
+  // 本地头像映射表 —— 要和 profile.tsx 里用的一样
+  const AVATAR_MAP: Record<string, any> = {
+    avatar1: require("../../assets/images/user1.png"),
+    avatar2: require("../../assets/images/user2.png"),
+    avatar3: require("../../assets/images/user3.png"),
+  };
+
 
   // --------------------------------------------------------------
   // ⭐ Functions: pick image
@@ -78,37 +89,53 @@ export default function UserHomepageScreen() {
   // --------------------------------------------------------------
   // ⭐ Load User Profile
   // --------------------------------------------------------------
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (!user) return;
+useEffect(() => {
+  const fetchUserData = async () => {
+    if (!user) return;
 
-      const displayName = user.displayName || "";
+    const displayName = user.displayName || "";
 
-      const userDocRef = doc(db, "users", user.uid);
-      const docSnap = await getDoc(userDocRef);
+    // 1) 先读 users，拿名字、学校、背景图
+    const userDocRef = doc(db, "users", user.uid);
+    const docSnap = await getDoc(userDocRef);
 
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setUserProfile({
-          fullName: displayName || (data.fullName ?? "User"),
-          university: data.university || "Simon Fraser University",
-          avatarUrl: data.avatarUrl || null,
-          backgroundUrl: data.backgroundUrl || null,
-        });
-      } else {
-        setUserProfile({
-          fullName: displayName || "User",
-          university: "Simon Fraser University",
-          avatarUrl: null,
-          backgroundUrl: null,
-        });
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      setUserProfile({
+        fullName: displayName || (data.fullName ?? "User"),
+        university: data.university || "Simon Fraser University",
+        avatarUrl: data.avatarUrl || null,
+        backgroundUrl: data.backgroundUrl || null,
+      });
+    } else {
+      setUserProfile({
+        fullName: displayName || "User",
+        university: "Simon Fraser University",
+        avatarUrl: null,
+        backgroundUrl: null,
+      });
+    }
+
+    // 2) 再读 presence 里的 avatarKey（和 profile 保持一致）
+    try {
+      const presenceRef = doc(db, "presence", user.uid);
+      const presenceSnap = await getDoc(presenceRef);
+      if (presenceSnap.exists()) {
+        const presenceData = presenceSnap.data() as any;
+        if (presenceData.avatarKey) {
+          setAvatarKey(presenceData.avatarKey);
+        }
       }
+    } catch (e) {
+      console.log("load avatarKey from presence error:", e);
+    }
 
-      setLoading(false);
-    };
+    setLoading(false);
+  };
 
-    fetchUserData();
-  }, []);
+  fetchUserData();
+}, []);
+
 
   // --------------------------------------------------------------
   // ⭐ Load user listed items
@@ -142,15 +169,22 @@ export default function UserHomepageScreen() {
       </SafeAreaView>
     );
 
-  if (!userProfile)
+   if (!userProfile)
     return (
       <SafeAreaView style={styles.container}>
         <Text>User profile not found.</Text>
       </SafeAreaView>
     );
 
+  // ⭐ 根据 avatarKey 选本地头像（和 profile 一样）
+  const avatarSource =
+    avatarKey && AVATAR_MAP[avatarKey]
+      ? AVATAR_MAP[avatarKey]
+      : require("../../assets/images/chair.png");
+
   return (
     <SafeAreaView style={styles.container}>
+
       <ScrollView>
 
         {/* Back Button */}
@@ -186,60 +220,22 @@ export default function UserHomepageScreen() {
             }}
           >
             <Image
-              source={
-                userProfile.backgroundUrl
-                  ? { uri: userProfile.backgroundUrl }
-                  : require("../../assets/images/chair.png")
-              }
+              source={avatarSource}
               style={styles.backgroundImage}
               blurRadius={10}
             />
           </TouchableOpacity>
 
           {/* Avatar */}
-          <View style={styles.profileInfoContainer}>
-            <TouchableOpacity
-              onPress={async () => {
-                if (!user) return;
+          {/* Avatar */}
+        <View style={styles.profileInfoContainer}>
+          <Image source={avatarSource} style={styles.avatar} />
 
-                const uri = await pickImage();
-                if (!uri) return;
-
-                const downloadURL = await uploadToStorage(
-                  uri,
-                  `users/${user.uid}/avatar.jpg`
-                );
-
-                await setDoc(
-                  doc(db, "users", user.uid),
-                  { avatarUrl: downloadURL },
-                  { merge: true }
-                );
-
-                setUserProfile((prev) => ({ ...prev!, avatarUrl: downloadURL }));
-              }}
-            >
-              <Image
-                source={
-                  userProfile.avatarUrl
-                    ? { uri: userProfile.avatarUrl }
-                    : require("../../assets/images/chair.png")
-                }
-                style={styles.avatar}
-              />
-            </TouchableOpacity>
-
-            <View style={styles.profileTextContainer}>
-              <Text style={styles.profileName}>{userProfile.fullName}</Text>
-              <View style={styles.statsContainer}>
-                <Text style={styles.statsText}>3 followers</Text>
-                <Text style={styles.statsText}>15 following</Text>
-              </View>
-            </View>
-
-            <TouchableOpacity style={styles.editButton}>
-              <Text style={styles.editButtonText}>Edit</Text>
-            </TouchableOpacity>
+          <View style={styles.profileTextContainer}>
+            <Text style={styles.profileName}>{userProfile.fullName}</Text>
+        
+          </View>
+            
           </View>
 
           <View style={styles.universityBadge}>
@@ -331,11 +327,14 @@ const styles = StyleSheet.create({
     borderColor: "#fff",
   },
 
-  profileTextContainer: { flex: 1, marginLeft: 15 },
+  profileTextContainer: { flex: 1, marginLeft: 15, marginBottom:30,   shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 6,},
   profileName: { fontSize: 22, fontWeight: "bold", color: "#fff" },
 
-  statsContainer: { flexDirection: "row", marginTop: 5 },
-  statsText: { color: "#eee", marginRight: 10, fontSize: 12 },
+
 
   editButton: {
     backgroundColor: "rgba(255,255,255,0.3)",
