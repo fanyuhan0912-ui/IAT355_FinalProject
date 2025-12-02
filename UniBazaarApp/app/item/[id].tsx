@@ -97,8 +97,7 @@ export default function ItemDetailScreen() {
     fetchItemAndSeller();
   }, [id]);
 
-  // 🔹 点击「Chat with seller」的逻辑 (保留你的已有逻辑)
-  // 🔹 点击「Chat with seller」的逻辑
+
   const handleChatPress = async () => {
     const currentUser = auth.currentUser;
 
@@ -113,7 +112,7 @@ export default function ItemDetailScreen() {
 
     const userId = currentUser.uid;
 
-    // 不允许给自己发消息
+   
     if (userId === item.sellerId) {
       Alert.alert("Notice", "You cannot chat with yourself.");
       return;
