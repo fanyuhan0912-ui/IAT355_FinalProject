@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: PAGE_BG,
     paddingHorizontal: 16,
-    paddingTop: 45,
+    paddingTop: 60,//Hi,user wellcome to...
 
   },
 

@@ -24,6 +24,8 @@ import {
 } from "firebase/firestore";
 import { db, auth } from "../../firebase/firebaseConfig";
 import { Ionicons } from "@expo/vector-icons";
+import { setDoc } from "firebase/firestore";
+
 
 type Message = {
   id: string;
@@ -40,6 +42,7 @@ export default function ChatDetailScreen() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [chatTitle, setChatTitle] = useState<string>("Chat");
+  const [chatInfo, setChatInfo] = useState<any>(null);
 
   const flatListRef = useRef<FlatList>(null);
 
@@ -52,10 +55,10 @@ export default function ChatDetailScreen() {
       const chatRef = doc(db, "chats", chatId);
       const snap = await getDoc(chatRef);
       if (snap.exists()) {
-        const data = snap.data();
-        if (data.itemTitle) {
-          setChatTitle(data.itemTitle);
-        }
+        setChatInfo(snap.data());
+        if (snap.data().itemTitle) {
+            setChatTitle(snap.data().itemTitle);
+            }
       }
     };
     loadChatInfo();
@@ -84,6 +87,42 @@ export default function ChatDetailScreen() {
 
     return () => unsub();
   }, [chatId]);
+
+    // ⭐⭐⭐ Step 3：完成交易函数（买家→purchased，卖家→sold）
+    const handleCompleteTransaction = async () => {
+      if (!chatInfo || !chatInfo.itemId || !chatInfo.sellerId || !chatInfo.buyerId) {
+        alert("交易信息缺失");
+        return;
+      }
+
+      const itemId = chatInfo.itemId;
+      const sellerId = chatInfo.sellerId;
+      const buyerId = chatInfo.buyerId;
+
+      try {
+        if (userId === buyerId) {
+          // ⭐ 我是买家 → 添加到 purchased
+          await setDoc(
+            doc(db, "users", buyerId, "purchased", itemId),
+            { itemId, completedAt: new Date() }
+          );
+          alert("已添加到 Purchased！");
+        } else if (userId === sellerId) {
+          // ⭐ 我是卖家 → 添加到 sold
+          await setDoc(
+            doc(db, "users", sellerId, "sold", itemId),
+            { itemId, completedAt: new Date()}
+          );
+          alert("已添加到 Sold！");
+        } else {
+          alert("你不是买家也不是卖家，不能完成交易");
+        }
+      } catch (e) {
+        console.log(e);
+        alert("交易失败，请稍后重试");
+      }
+    };
+
 
   // 🔹 发送消息
   const handleSend = async () => {
@@ -153,7 +192,7 @@ export default function ChatDetailScreen() {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={90}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
     >
       {/* 顶部简单 header */}
       <View style={styles.header}>
@@ -164,6 +203,31 @@ export default function ChatDetailScreen() {
           {chatTitle}
         </Text>
       </View>
+
+      {chatInfo && (
+        <View style={styles.actionBar}>
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={() => {
+              router.push({
+                pathname: "/profile_pages/userHomepage",
+                params: { uid: chatInfo.sellerId },
+              });
+            }}
+          >
+            <Text style={styles.actionText}>Check Info</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={() => handleCompleteTransaction()}
+          >
+            <Text style={styles.actionText}>Transact Complete
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
 
       {/* 消息列表 */}
       <FlatList
@@ -213,6 +277,34 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     flex: 1,
   },
+
+  actionBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#f5f5f5",
+    borderBottomWidth: 1,
+    borderBottomColor: "#eaeaea",
+  },
+
+  actionBtn: {
+    flex: 1,
+    backgroundColor: "#ffffff",
+    paddingVertical: 10,
+    marginHorizontal: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    alignItems: "center",
+  },
+
+  actionText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#333",
+  },
+
 
   messagesContainer: {
     paddingHorizontal: 12,
@@ -278,4 +370,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+
 });
+

@@ -23,6 +23,8 @@ import {
   getDocs,
 } from "firebase/firestore";
 import { db, auth } from "../../firebase/firebaseConfig";
+import { useLocalSearchParams } from "expo-router";
+
 
 interface UserProfile {
   fullName: string;
@@ -32,14 +34,18 @@ interface UserProfile {
 }
 
 export default function UserHomepageScreen() {
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+    const user = auth.currentUser;
+    const params = useLocalSearchParams();
+    const profileUid = params.uid as string | undefined;
+    const viewingUid = profileUid ?? auth.currentUser?.uid;
 
-  const [avatarKey, setAvatarKey] = useState<string>("avatar1"); // ⭐ 新增
+    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+    const [avatarKey, setAvatarKey] = useState<string>("avatar1");
+    const [listedItems, setListedItems] = useState<any[]>([]);
+    const [activeTab, setActiveTab] = useState<"items" | "reviews">("items");
+    const [loading, setLoading] = useState(true);
 
-  const [activeTab, setActiveTab] = useState<"items" | "reviews">("items");
-  const [listedItems, setListedItems] = useState<any[]>([]);
-  const user = auth.currentUser;
+
 
 
   // 本地头像映射表 —— 要和 profile.tsx 里用的一样
@@ -91,50 +97,53 @@ export default function UserHomepageScreen() {
   // --------------------------------------------------------------
 useEffect(() => {
   const fetchUserData = async () => {
-    if (!user) return;
+    if (!viewingUid) return;
 
-    const displayName = user.displayName || "";
+    // 1) 读 users 集合
+    const userDocRef = doc(db, "users", viewingUid);
+    const userSnap = await getDoc(userDocRef);
 
-    // 1) 先读 users，拿名字、学校、背景图
-    const userDocRef = doc(db, "users", user.uid);
-    const docSnap = await getDoc(userDocRef);
+    let finalName = "User"; // 默认名
+    let university = "Simon Fraser University";
+    let avatarUrl = null;
+    let backgroundUrl = null;
 
-    if (docSnap.exists()) {
-      const data = docSnap.data();
-      setUserProfile({
-        fullName: displayName || (data.fullName ?? "User"),
-        university: data.university || "Simon Fraser University",
-        avatarUrl: data.avatarUrl || null,
-        backgroundUrl: data.backgroundUrl || null,
-      });
-    } else {
-      setUserProfile({
-        fullName: displayName || "User",
-        university: "Simon Fraser University",
-        avatarUrl: null,
-        backgroundUrl: null,
-      });
+    if (userSnap.exists()) {
+      const data = userSnap.data();
+      finalName = data.fullName || finalName;
+      university = data.university || university;
+      avatarUrl = data.avatarUrl || null;
+      backgroundUrl = data.backgroundUrl || null;
     }
 
-    // 2) 再读 presence 里的 avatarKey（和 profile 保持一致）
-    try {
-      const presenceRef = doc(db, "presence", user.uid);
-      const presenceSnap = await getDoc(presenceRef);
-      if (presenceSnap.exists()) {
-        const presenceData = presenceSnap.data() as any;
-        if (presenceData.avatarKey) {
-          setAvatarKey(presenceData.avatarKey);
-        }
+    // 2) 读 presence 里的 displayName（在线状态里的名字）
+    const presenceRef = doc(db, "presence", viewingUid);
+    const presenceSnap = await getDoc(presenceRef);
+
+    if (presenceSnap.exists()) {
+      const pData = presenceSnap.data() as any;
+
+      if (pData.displayName) {
+        finalName = pData.displayName; // ⭐ 优先 presence 名字
       }
-    } catch (e) {
-      console.log("load avatarKey from presence error:", e);
+      if (pData.avatarKey) {
+        setAvatarKey(pData.avatarKey);
+      }
     }
+
+    // ⭐ 最终写入 userProfile
+    setUserProfile({
+      fullName: finalName,
+      university,
+      avatarUrl,
+      backgroundUrl,
+    });
 
     setLoading(false);
   };
 
   fetchUserData();
-}, []);
+}, [viewingUid]);
 
 
   // --------------------------------------------------------------
@@ -146,7 +155,7 @@ useEffect(() => {
 
       const q = query(
         collection(db, "items"),
-        where("sellerId", "==", user.uid)
+        where("sellerId", "==", viewingUid)
       );
 
       const snap = await getDocs(q);
@@ -156,7 +165,7 @@ useEffect(() => {
     };
 
     fetchListedItems();
-  }, [user]);
+  }, [viewingUid]);
 
   const openDetail = (id: string) => {
     router.push({ pathname: "/item/[id]", params: { id } });

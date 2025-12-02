@@ -162,10 +162,10 @@ export default function ItemDetailScreen() {
       } else {
         const newChatRef = await addDoc(chatsRef, {
           buyerId: userId,
-          sellerId: item.sellerId,
+          sellerId: item.sellerUid,
           itemId: item.id,
           itemTitle: item.title ?? "",
-          participants: [userId, item.sellerId], // 方便 chat list 查询
+          participants: [userId, item.sellerUid], // 方便 chat list 查询
           lastMessage: "",
           lastMessageAt: serverTimestamp(),
           createdAt: serverTimestamp(),
