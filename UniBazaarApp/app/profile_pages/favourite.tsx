@@ -4,7 +4,7 @@ import { useNavigation } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useFavorites } from '../FavoritesContext';
 
-// 商品卡片组件 (和 home.tsx 类似)
+
 const ItemCard = ({ item }: { item: any }) => {
   const { toggleFavorite, isFavorite } = useFavorites();
   const favorite = isFavorite(item.id);
@@ -33,7 +33,7 @@ const ItemCard = ({ item }: { item: any }) => {
 
 export default function FavouriteScreen() {
   const navigation = useNavigation();
-  const { favorites } = useFavorites(); // 从全局状态获取收藏夹列表
+  const { favorites } = useFavorites();
 
   return (
     <View style={styles.container}>
