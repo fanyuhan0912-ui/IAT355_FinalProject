@@ -34,39 +34,6 @@ type Item = {
   title?: string; // Add this line
 };
 
-// ⭐ Mock items for map pins
-const MOCK_ITEMS: Item[] = [
-  {
-    id: "1",
-    name: "Ergonomic Desk Chair",
-    price: 60,
-    imageUrl:
-      "https://images.unsplash.com/photo-1589984643360-ad55b8be1f50?w=600",
-    sellerId: "userA",
-    lat: 49.279,
-    lon: -122.92,
-  },
-  {
-    id: "2",
-    name: "MacBook Pro 13in 2020",
-    price: 850,
-    imageUrl:
-      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600",
-    sellerId: "userB",
-    lat: 49.276,
-    lon: -122.917,
-  },
-  {
-    id: "3",
-    name: "Winter Jacket - Size M",
-    price: 35,
-    imageUrl:
-      "https://images.unsplash.com/photo-1602810315748-2c4e02b300dd?w=600",
-    sellerId: "userC",
-    lat: 49.281,
-    lon: -122.923,
-  },
-];
 
 const ONLINE_WINDOW_MS = 5 * 60 * 1000;
 const HEARTBEAT_MS = 30 * 1000;
@@ -291,33 +258,8 @@ export default function NearMeScreen() {
             setSelectedItem(null);
           }}
         >
-          {/* Mock 商品 Pins */}
-          {MOCK_ITEMS.map((item) => (
-            <Marker
-              key={item.id}
-              coordinate={{ latitude: item.lat, longitude: item.lon }}
-              onPress={(e) => {
-                  e.stopPropagation();
-                  setSelectedItem(item);
-                  setShowUserCard(false);
-                  console.log("ITEM MARKER CLICKED:", item.id);
-              }}
 
-            >
-              <View
-                style={{
-                  backgroundColor: "#FF5A5F",
-                  paddingHorizontal: 8,
-                  paddingVertical: 4,
-                  borderRadius: 16,
-                }}
-              >
-                <Text style={{ color: "white", fontWeight: "bold" }}>
-                  ${item.price}
-                </Text>
-              </View>
-            </Marker>
-          ))}
+
 
 
           {/* My position */}

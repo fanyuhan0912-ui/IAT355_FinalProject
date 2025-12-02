@@ -218,7 +218,7 @@ export default function ChatDetailScreen() {
             <Text style={styles.actionText}>Check Info</Text>
           </TouchableOpacity>
 
-          <TouchableOpacitydle
+          <TouchableOpacity
             style={styles.actionBtn}
             onPress={() => handleCompleteTransaction()}
           >
