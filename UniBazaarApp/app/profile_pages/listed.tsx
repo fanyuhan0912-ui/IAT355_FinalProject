@@ -3,14 +3,14 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, SafeAreaView
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { collection, query, where, getDocs, Firestore } from 'firebase/firestore';
-import { db, auth } from '../../firebase/firebaseConfig'; // 确保你的 Firebase 配置文件路径正确
+import { db, auth } from '../../firebase/firebaseConfig'; 
 
-// 定义商品数据结构
+
 interface Product {
-  id: string; // Firestore 文档 ID
+  id: string;
   name: string;
   price: number;
-  imageUrl: string; // 商品图片 URL
+  imageUrl: string; 
 }
 
 export default function ListedScreen() {
@@ -18,10 +18,10 @@ export default function ListedScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 获取当前登录用户
+
   const user = auth.currentUser;
 
-  // 从 Firebase 加载用户已上架的商品
+ 
   useEffect(() => {
     const fetchListedItems = async () => {
       // 确保用户已登录
@@ -32,20 +32,20 @@ export default function ListedScreen() {
       }
 
       try {
-        // 创建一个查询，获取 'products' 集合中 'sellerId' 等于当前用户 UID 的所有商品
+      
         const q = query(collection(db, "items"), where("sellerId", "==", user.uid));
 
         const querySnapshot = await getDocs(q);
 
         const products: Product[] = [];
         querySnapshot.forEach((doc) => {
-          // doc.data() 包含商品的所有字段
+      
           const data = doc.data();
           products.push({
             id: doc.id,
             name: data.title,
             price: data.price,
-            imageUrl: data.imageUrl, // 确保你的 Firestore 文档中有 imageUrl 字段
+            imageUrl: data.imageUrl, 
           });
         });
 
@@ -59,11 +59,11 @@ export default function ListedScreen() {
     };
 
     fetchListedItems();
-  }, [user]); // 当 user 对象变化时（例如登录/退出后），重新执行
+  }, [user]); 
 
-  // “推广”按钮的点击处理函数
+ 
   const handlePromote = (item: Product) => {
-    // 弹出提示框，让用户确认
+   
     Alert.alert(
       "Promote Item",
       `Are you sure you want to promote "${item.name}"? This may involve a fee or use a promotion slot.`,
@@ -75,8 +75,6 @@ export default function ListedScreen() {
         {
           text: "Yes, Promote",
           onPress: () => {
-            // 在这里实现你的推广逻辑
-            // 例如：更新 Firestore 中的商品状态，或者调用一个云函数
             console.log(`Promoting item: ${item.id}`);
             Alert.alert("Success", `"${item.name}" has been promoted!`);
           }
@@ -85,7 +83,7 @@ export default function ListedScreen() {
     );
   };
 
-  // 渲染每个列表项的组件
+
   const renderItem = ({ item }: { item: Product }) => (
     <View style={styles.itemContainer}>
       <Image source={{ uri: item.imageUrl }} style={styles.itemImage} />
@@ -102,7 +100,7 @@ export default function ListedScreen() {
     </View>
   );
 
-  // 列表为空时显示的组件
+
   const renderEmptyComponent = () => (
     <View style={styles.emptyContainer}>
       <Ionicons name="cube-outline" size={60} color="#CCCCCC" />
@@ -111,7 +109,7 @@ export default function ListedScreen() {
     </View>
   );
 
-  // 加载状态或错误状态的显示
+ 
   if (loading) {
     return <View style={styles.centerContainer}><Text>Loading...</Text></View>;
   }
@@ -133,7 +131,7 @@ export default function ListedScreen() {
   );
 }
 
-// 样式表
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -161,7 +159,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: 16,
   },
-  // 列表项样式
+  
   itemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -182,7 +180,7 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   itemInfo: {
-    flex: 1, // 占据剩余空间
+    flex: 1, 
     justifyContent: 'center',
   },
   itemName: {
@@ -196,7 +194,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontWeight: 'bold',
   },
-  // Promote 按钮样式
+  
   promoteButton: {
     backgroundColor: '#FF7E3E',
     paddingVertical: 8,
@@ -208,7 +206,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
   },
-  // 空状态和加载状态的样式
+
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -219,7 +217,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    marginTop: '40%', // 视觉上更居中
+    marginTop: '40%',
   },
   emptyText: {
     marginTop: 16,

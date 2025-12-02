@@ -11,6 +11,7 @@ import { useNavigation } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { db, auth } from "../../firebase/firebaseConfig";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { router } from "expo-router";
 
 export default function PurchasedScreen() {
   const navigation = useNavigation();
@@ -19,7 +20,7 @@ export default function PurchasedScreen() {
 
   const currentUser = auth.currentUser;
 
-  // ⭐ 加载 purchased 列表 + 再根据 itemId 加载真实 item 信息
+  
   useEffect(() => {
     if (!currentUser) return;
 
@@ -35,11 +36,10 @@ export default function PurchasedScreen() {
 
         const purchasedList: any[] = [];
 
-        // 每个 purchased item 都有 itemId → 需要从 items/{itemId} 获取真实信息
         for (const docSnap of purchasedSnap.docs) {
           const { itemId, completedAt } = docSnap.data();
 
-          // 去 items collection 取真实 item 数据
+        
           const itemRef = doc(db, "items", itemId);
           const itemDataSnap = await getDoc(itemRef);
 
@@ -48,15 +48,15 @@ export default function PurchasedScreen() {
               id: docSnap.id,
               itemId,
               completedAt,
-              ...itemDataSnap.data(), // 包含 title、price、imageUrl...
+              ...itemDataSnap.data(), 
             });
           }
         }
 
-        console.log("🔥 Purchased loaded:", purchasedList);
+        console.log("Purchased loaded:", purchasedList);
         setPurchasedItems(purchasedList);
       } catch (e) {
-        console.log("❌ Error loading purchased:", e);
+        console.log("Error loading purchased:", e);
       } finally {
         setLoading(false);
       }
@@ -68,9 +68,9 @@ export default function PurchasedScreen() {
   const renderItem = ({ item }: { item: any }) => (
     <TouchableOpacity
       style={styles.itemContainer}
-      onPress={() =>
-        navigation.navigate("itemDetail", { id: item.itemId }) // 未来你有 itemDetail 再开
-      }
+      onPress={() => {
+    router.push(`/item/${item.itemId}`);
+  }}
     >
       <Image
         source={{ uri: item.imageUrl }}
@@ -87,8 +87,13 @@ export default function PurchasedScreen() {
           {item.completedAt?.toDate?.().toLocaleDateString?.() ?? "Unknown"}
         </Text>
 
-        <TouchableOpacity style={styles.reviewButton}>
-          <Text style={styles.reviewButtonText}>Write a Review</Text>
+        <TouchableOpacity style={styles.reviewButton}
+        onPress={() => {
+    router.push(`/item/${item.itemId}`);
+  }}
+        
+        >
+          <Text style={styles.reviewButtonText}>View Item's Detail</Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
