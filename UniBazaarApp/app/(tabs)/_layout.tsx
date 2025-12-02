@@ -18,9 +18,9 @@ export default function TabLayout() {
         name="home"
         options={{
           title: "Home",
-          tabBarIcon: ({ color, size, focused }) => ( // 添加 focused 参数
+          tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
-              name={focused ? "home" : "home-outline"} // 根据 focused 状态切换图标
+              name={focused ? "home" : "home-outline"}
               color={color}
               size={size}
             />
@@ -33,9 +33,9 @@ export default function TabLayout() {
         name="nearme"
         options={{
           title: "Near Me",
-          tabBarIcon: ({ color, size, focused }) => ( // 添加 focused 参数
+          tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
-              name={focused ? "location" : "location-outline"} // 根据 focused 状态切换图标
+              name={focused ? "location" : "location-outline"}
               color={color}
               size={size}
             />
@@ -82,9 +82,9 @@ export default function TabLayout() {
         name="chat"
         options={{
           title: "Chat",
-          tabBarIcon: ({ color, size, focused }) => ( // 添加 focused 参数
+          tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
-              name={focused ? "chatbubbles" : "chatbubbles-outline"} // 使用复数形式通常更好看
+              name={focused ? "chatbubbles" : "chatbubbles-outline"}
               color={color}
               size={size}
             />
@@ -97,9 +97,9 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: "Me",
-          tabBarIcon: ({ color, size, focused }) => ( // 添加 focused 参数
+          tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
-              name={focused ? "person" : "person-outline"} // 根据 focused 状态切换图标
+              name={focused ? "person" : "person-outline"}
               color={color}
               size={size}
             />

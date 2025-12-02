@@ -17,9 +17,9 @@ import {
   orderBy,
   doc,
   getDocs,
-  writeBatch,   // ⭐ 为删除子集合用
+  writeBatch,
 } from "firebase/firestore";
-import { Swipeable } from "react-native-gesture-handler"; // ⭐ 左滑组件
+import { Swipeable } from "react-native-gesture-handler";
 import { db, auth } from "../../firebase/firebaseConfig";
 
 type Chat = {
@@ -38,7 +38,7 @@ export default function ChatListScreen() {
   const currentUser = auth.currentUser;
   const userId = currentUser?.uid;
 
-  // ⭐ 删除聊天（包括 messages 子集合）
+  // delete msg
   const handleDeleteChat = async (chatId: string) => {
     Alert.alert("Delete chat", "Are you sure you want to delete this chat?", [
       { text: "Cancel", style: "cancel" },
@@ -47,7 +47,7 @@ export default function ChatListScreen() {
         style: "destructive",
         onPress: async () => {
           try {
-            // 1) 删掉 messages 子集合里的所有文档
+
             const msgsRef = collection(db, "chats", chatId, "messages");
             const msgsSnap = await getDocs(msgsRef);
 
@@ -56,12 +56,11 @@ export default function ChatListScreen() {
               batch.delete(m.ref);
             });
 
-            // 2) 再删掉 chat 本身
+
             const chatRef = doc(db, "chats", chatId);
             batch.delete(chatRef);
 
             await batch.commit();
-            // 不需要手动 setChats，onSnapshot 会自动更新
           } catch (err) {
             console.error("Delete chat error:", err);
             Alert.alert("Error", "Failed to delete chat, please try again.");
@@ -145,7 +144,6 @@ export default function ChatListScreen() {
           const isBuyer = item.buyerId === userId;
 
           return (
-            // ⭐ 用 Swipeable 包住每一行
             <Swipeable renderRightActions={() => renderRightActions(item)}>
               <TouchableOpacity
                 style={[
@@ -218,7 +216,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#333",
   },
-  // ⭐ 右侧 Delete 按钮样式
+  // right side delete
   deleteButton: {
     backgroundColor: "#ef4444",
     justifyContent: "center",

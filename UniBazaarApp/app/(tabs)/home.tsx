@@ -58,7 +58,7 @@ type Item = {
   sellerId?: string;
   createdAt?: number;
   distanceKm?: number;
-  category?: string; // Firestore 里的分类字段
+  category?: string;
 };
 
 export default function HomeScreen() {
@@ -70,7 +70,7 @@ export default function HomeScreen() {
   const [searchQuery, setSearchQuery] = useState<string>("");
 
 
- // 读取当前登录用户的名字（来自 Firebase Auth.displayName）
+ //  Firebase Auth.displayName）
   useEffect(() => {
     const user = auth.currentUser;
     if (user) {
@@ -78,7 +78,7 @@ export default function HomeScreen() {
     }
   }, []);
 
-  // ========= 连接 Firestore =========
+  // connect Firestore
   useEffect(() => {
     const q = query(collection(db, "items"));
 
@@ -101,7 +101,7 @@ export default function HomeScreen() {
     return () => unsub();
   }, []);
 
-  // ========= Loading =========
+  // Loading
   if (loading) {
     return (
       <View style={styles.center}>
@@ -111,7 +111,7 @@ export default function HomeScreen() {
     );
   }
 
-  // ========= 完全没有 item 时 =========
+  // no item
   if (!items.length) {
     return (
       <View style={styles.center}>
@@ -125,11 +125,10 @@ export default function HomeScreen() {
     );
   }
 
-// 当前选中的分类名称（用来替换 All Items 文本）
 const currentCategoryLabel =
   CATEGORIES.find((c) => c.key === selectedCategory)?.label || "All Items";
 
-// 先按分类过滤一轮
+// filter selcet
 const itemsByCategory =
   selectedCategory === "all"
     ? items
@@ -139,10 +138,10 @@ const itemsByCategory =
           selectedCategory.toLowerCase()
       );
 
-// 再按搜索关键词过滤（标题 / 描述里包含就算匹配）
+// filter
 const displayedItems = itemsByCategory.filter((item) => {
   const q = searchQuery.trim().toLowerCase();
-  if (!q) return true; // 🔹没输入搜索内容，就不过滤
+  if (!q) return true;
 
   const title = (item.title || "").toLowerCase();
   const desc = (item.description || "").toLowerCase();
@@ -152,19 +151,16 @@ const displayedItems = itemsByCategory.filter((item) => {
 
 const handleSearch = () => {
   console.log("Searching for:", searchQuery);
-
-  // 🔥 不需要专门写逻辑，因为你已经用 searchQuery 过滤了
-  // 这里只是关闭键盘效果
   Keyboard.dismiss();
 };
 
 
-  // ========= 渲染单个卡片 =========
+  // render part
  const renderItem = ({ item }: { item: Item }) => {
   const favorite = isFavorite(item.id);
-  const distance = item.distanceKm ?? 0.5; // 临时假数据
+  const distance = item.distanceKm ?? 0.5; //mock
 
-  // 点击卡片时跳转到 /item/[id]
+  // click card jump to item
   const handleOpenDetail = () => {
     router.push({
       pathname: "/item/[id]",
@@ -176,10 +172,10 @@ const handleSearch = () => {
     <TouchableOpacity
       style={styles.shadowWrapper}
       activeOpacity={0.9}
-      onPress={handleOpenDetail}   // ⭐ 点整个卡片进入详情
+      onPress={handleOpenDetail}
     >
       <View style={styles.card}>
-        {/* 图片区域 */}
+        {/* pics*/}
         <View style={styles.imageWrapper}>
           {item.imageUrl ? (
             <Image
@@ -193,7 +189,7 @@ const handleSearch = () => {
             </View>
           )}
 
-          {/* 右上角心形按钮（收藏） */}
+          {/* heart */}
           <TouchableOpacity
             style={styles.heartButton}
             onPress={() => toggleFavorite(item)}
@@ -207,7 +203,7 @@ const handleSearch = () => {
           </TouchableOpacity>
         </View>
 
-        {/* 底部文字区域 */}
+        {/* text */}
         <View style={styles.cardBody}>
           <Text style={styles.cardTitle} numberOfLines={1}>
             {item.title || "(Untitled)"}
@@ -228,10 +224,10 @@ const handleSearch = () => {
 };
 
 
-  // ========= 整个页面布局 =========
+  // page layout
   return (
     <View style={styles.container}>
-      {/* 顶部：问候 + Weather */}
+      {/* hi + Weather */}
       <View style={styles.header}>
         <View>
           <Text style={styles.greetingText}>Hi, {userName || "there"}.</Text>
@@ -242,7 +238,7 @@ const handleSearch = () => {
         </View>
       </View>
 
-      {/* 搜索栏 */}
+      {/* search */}
      <View style={styles.searchBar}>
   <Ionicons name="search" size={18} color="#999" />
 
@@ -252,11 +248,11 @@ const handleSearch = () => {
     placeholderTextColor="#c9c9c9"
     value={searchQuery}
     onChangeText={setSearchQuery}
-    returnKeyType="search"          // ⬅️ 让键盘显示 "Search"
-    onSubmitEditing={handleSearch}  // ⬅️ 按 Return 时触发
+    returnKeyType="search"
+    onSubmitEditing={handleSearch}
   />
 
-  {/* 右侧搜索按钮 */}
+  {/* sight side search button */}
   <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
     <Text style={styles.searchButtonText}>Go</Text>
   </TouchableOpacity>
@@ -264,7 +260,6 @@ const handleSearch = () => {
 
 
 
-      {/* 分类 row：用图片 + 背景选中态 */}
       <View style={styles.categoryRow}>
         {CATEGORIES.map((cat) => (
           <CategoryButton
@@ -277,7 +272,7 @@ const handleSearch = () => {
         ))}
       </View>
 
-      {/* All items 标题（会根据选中分类改变文字） */}
+      {/* All items section */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>{currentCategoryLabel}</Text>
         <Text style={styles.sectionCount}>
@@ -285,7 +280,7 @@ const handleSearch = () => {
         </Text>
       </View>
 
-      {/* 卡片背景区域（单独换颜色） */}
+      {/* card backgroundColor */}
  
         {displayedItems.length === 0 ? (
           <View style={styles.emptyInCategory}>
@@ -312,7 +307,7 @@ const handleSearch = () => {
   );
 }
 
-/* 分类按钮组件：图片 + 文字 + 选中浅蓝背景 */
+/* categories buttpn */
 function CategoryButton({
   label,
   image,
@@ -357,7 +352,7 @@ function CategoryButton({
   );
 }
 
-/* 样式 */
+/* style */
 const CARD_BG = "#ffffff";
 const PAGE_BG = "#F5F5F5";
 const styles = StyleSheet.create({
@@ -501,7 +496,7 @@ searchInput: {
   },
   card: {
     width: "100%",
-    backgroundColor: CARD_BG, // card 自己的背景色
+    backgroundColor: CARD_BG,
     borderRadius: 18,
     overflow: "hidden",
   },
