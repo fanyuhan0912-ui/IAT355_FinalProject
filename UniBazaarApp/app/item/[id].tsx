@@ -183,8 +183,10 @@ export default function ItemDetailScreen() {
   // 🔹 点击卖家头像/名字
   const handleSellerPress = () => {
     if (!seller) return;
-    Alert.alert("Go to Seller", `Navigate to profile for ${seller.fullName}?`);
-    // 以后可以：router.push(`/user/${seller.uid}`)
+    router.push({
+        pathname:"profile_pages/userHomepage",
+        params:{uid:seller.uid},
+        })
   };
 
   // 🔹 loading & not found
