@@ -1,289 +1,417 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, SafeAreaView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { auth } from '../../firebase/firebaseConfig';
-import { signOut } from 'firebase/auth';
-import { router, type Href } from 'expo-router';
+// app/(tabs)/profile.tsx
+import React, { useEffect, useState } from "react";
+import {
+  SafeAreaView,
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Modal,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { auth, db } from "../../firebase/firebaseConfig";
+import { signOut } from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+
+// 可选头像列表（按自己实际图片改）
+const AVATAR_OPTIONS = [
+
+  {
+    key: "avatar1",
+    source: require("../../assets/images/user1.png"),
+  },
+  {
+    key: "avatar2",
+    source: require("../../assets/images/user2.png"),
+  },
+  {
+    key: "avatar3",
+    source: require("../../assets/images/user3.png"),
+  },
+
+];
 
 export default function ProfileScreen() {
-
   const user = auth.currentUser;
 
-  const userName = user?.displayName || "User";
+  const [userName, setUserName] = useState<string>(
+    user?.displayName || "UniBazaar User"
+  );
+  const [avatarKey, setAvatarKey] = useState<string>("chair");
+  const [avatarModalVisible, setAvatarModalVisible] = useState(false);
 
+  // 当前头像的图片
+  const currentAvatarSource =
+    AVATAR_OPTIONS.find((a) => a.key === avatarKey)?.source ||
+    AVATAR_OPTIONS[0].source;
 
-const handleNavigation = (path: Href) => {
-  router.push(path);
-};
+  // 读取 Firestore 里的用户信息（名字 + avatarKey）
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      if (!user) return;
+      try {
+        // 如果你用的是 "users" 集合，把这里的 "presence" 改成 "users"
+        const ref = doc(db, "presence", user.uid);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          const data = snap.data() as any;
+          if (data.displayName) setUserName(data.displayName);
+          if (data.avatarKey) setAvatarKey(data.avatarKey);
+        } else if (user.displayName) {
+          setUserName(user.displayName);
+        }
+      } catch (e) {
+        console.log("load user profile error:", e);
+      }
+    };
 
-  const handleLogout = async () => {
+    loadUserProfile();
+  }, [user]);
+
+  // 点击头像：打开弹窗
+  const handleAvatarPress = () => {
+    setAvatarModalVisible(true);
+  };
+
+  // 选择某个头像：更新本地 state + Firestore
+  const handleSelectAvatar = async (key: string) => {
+    setAvatarKey(key);
+    setAvatarModalVisible(false);
+
+    if (!user) return;
+
     try {
-      await signOut(auth);
-      router.replace('/login');
-    } catch (error) {
-      console.error('Logout error:', error);
+      const ref = doc(db, "presence", user.uid); // 或 "users"
+      await setDoc(
+        ref,
+        {
+          avatarKey: key,
+        },
+        { merge: true }
+      );
+    } catch (e) {
+      console.log("save avatar error:", e);
     }
   };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profile</Text>
-        <TouchableOpacity>
-          <Ionicons name="settings-outline" size={24} color="#00000" />
-        </TouchableOpacity>
-      </View>
+  // 退出登录
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.replace("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
 
-        <TouchableOpacity 
-            activeOpacity={0.8}
-            onPress={() => handleNavigation('/profile_pages/userHomepage')}
+  // 跳转到 profile_pages 下面的子页面
+  const handleNavigation = (path: string) => {
+    // 例如 path = "/profile_pages/userHomepage"
+    router.push(path as any);
+  };
 
-        >
-            <View style={styles.profileCard}>
-                <Image source={require('../../assets/images/chair.png')} style={styles.avatar} />
-                <View style={styles.profileInfo}>
-                    <Text style={styles.profileName}>{userName}</Text>
-                    <View style={styles.ratingContainer}>
-                        <Ionicons name="star" size={16} color="#FE8A0D" />
-                        <Ionicons name="star" size={16} color="#FE8A0D" />
-                        <Ionicons name="star" size={16} color="#FE8A0D" />
-                        <Ionicons name="star" size={16} color="#FE8A0D" />
-                        <Ionicons name="star-half" size={16} color="#FE8A0D" />
-                    </View>
-                </View>
-                <TouchableOpacity>
-                    <Ionicons name ="chevron-forward-outline" size={24} color="#C7C7CC" style={{ marginLeft: 8 }} />
-                </TouchableOpacity>
+return (
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        {/* 顶部标题栏 */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Profile</Text>
+          <TouchableOpacity onPress={handleLogout}>
+            <Ionicons name="settings-outline" size={24} color="#000" />
+          </TouchableOpacity>
+        </View>
+
+      {/* 个人信息卡片 */}
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() => handleNavigation("/profile_pages/userHomepage")}
+      >
+        <View style={styles.profileCard}>
+          {/* 头像：可点击打开弹窗 */}
+          <TouchableOpacity onPress={handleAvatarPress} activeOpacity={0.8}>
+            <Image source={currentAvatarSource} style={styles.avatar} />
+          </TouchableOpacity>
+
+          {/* 名字 + 星级 */}
+          <View style={styles.profileInfo}>
+            <Text style={styles.profileName}>{userName}</Text>
+            <View style={styles.ratingContainer}>
+              <Ionicons name="star" size={16} color="#FFBA00" />
+              <Ionicons name="star" size={16} color="#FFBA00" />
+              <Ionicons name="star" size={16} color="#FFBA00" />
+              <Ionicons name="star" size={16} color="#FFBA00" />
+              <Ionicons name="star-half" size={16} color="#FFBA00" />
             </View>
-        </TouchableOpacity>
+          </View>
 
-<View style={styles.section}>
+          {/* 右侧箭头 */}
+          <TouchableOpacity
+            onPress={() => handleNavigation("/profile_pages/userHomepage")}
+          >
+            <Ionicons
+              name="chevron-forward-outline"
+              size={24}
+              color="#C7C7CC"
+              style={{ marginLeft: 8 }}
+            />
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+
+      {/* Section: Buying */}
+      <View style={styles.section}>
         <Text style={styles.sectionTitle}>Buying</Text>
         <View style={styles.iconGrid}>
-          <View style={styles.iconContainer}>
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={() => handleNavigation('/profile_pages/favourite')}>
-              <Ionicons name="heart-outline" size={28} color="#224594" />
-            </TouchableOpacity>
-            <Text style={styles.iconLabel1}>Favourite</Text>
-          </View>
-          <View style={styles.iconContainer}>
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={() => handleNavigation('/profile_pages/purchased')}>
-              <Ionicons name="cart-outline" size={28} color="#224594" />
-            </TouchableOpacity>
-            <Text style={styles.iconLabel1}>Purchased</Text>
-          </View>
-          <View style={styles.iconContainer}>
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={() => handleNavigation('/profile_pages/toReview')}>
-              <Ionicons name="chatbox-outline" size={28} color="#224594" />
-            </TouchableOpacity>
-            <Text style={styles.iconLabel1}>To Review</Text>
-          </View>
+          <TouchableOpacity
+            style={styles.iconContainer}
+            onPress={() => handleNavigation("/profile_pages/favourite")}
+          >
+            <Ionicons name="heart-outline" size={22} color="#224594" />
+            <Text style={styles.iconLabel}>Favourites</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.iconContainer}
+            onPress={() => handleNavigation("/profile_pages/purchased")}
+          >
+            <Ionicons name="cart-outline" size={22} color="#224594" />
+            <Text style={styles.iconLabel}>Purchased</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
+      {/* Section: Selling */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Selling</Text>
         <View style={styles.iconGrid}>
-          <View style={styles.iconContainer}>
-            <TouchableOpacity 
-              style={styles.iconButton}
-              onPress={() => handleNavigation('/profile_pages/sold')}>
-              <Ionicons name="pricetag-outline" size={28} color="#FF7E3E" />
-            </TouchableOpacity>
-            <Text style={styles.iconLabel}>Sold</Text>
-          </View>
-          <View style={styles.iconContainer}>
-            <TouchableOpacity 
-              style={styles.iconButton}
-              onPress={() => handleNavigation('/profile_pages/listed')}>
-              <Ionicons name="cube-outline" size={28} color="#FF7E3E" />
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.iconContainer}
+            onPress={() => handleNavigation("/profile_pages/listed")}
+          >
+            <Ionicons name="pricetag-outline" size={22} color="#FE8A0D" />
             <Text style={styles.iconLabel}>Listed</Text>
-          </View>
-          <View style={styles.iconContainer}>
-            <TouchableOpacity 
-              style={styles.iconButton}
-              onPress={() => handleNavigation('/profile_pages/viewMore')}>
-              <Ionicons name="grid-outline" size={28} color="#FF7E3E" />
-            </TouchableOpacity>
-            <Text style={styles.iconLabel}>View more</Text>
-          </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.iconContainer}
+            onPress={() => handleNavigation("/profile_pages/sold")}
+          >
+            <Ionicons name="checkmark-done-outline" size={22} color="#FE8A0D" />
+            <Text style={styles.iconLabel}>Sold</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
-      <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-        <Ionicons name="log-out-outline" size={24} color="#D0021B" />
-        <Text style={styles.logoutText}>Logout</Text>
-      </TouchableOpacity>
-
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>UniBazaar v1.0.0</Text>
-        <Text style={styles.footerSubText}>Safe trading for SFU students</Text>
+     <View style={styles.section}>
+        <Text style={styles.sectionTitleLogout}>Logout</Text>
+        <View style={styles.iconGrid}>
+            <TouchableOpacity style={styles.iconContainerLogout}
+            onPress={() => handleNavigation("../login")}
+          >
+            <Ionicons name="log-out-outline" size={22} color="#ff0000ff" />
+            <Text style={styles.iconLabel}>Logout</Text>
+          </TouchableOpacity>
+          
+        </View>
       </View>
+
+
+
+
+      {/* ===== 头像选择弹窗 ===== */}
+      <Modal
+        visible={avatarModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setAvatarModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Choose your avatar</Text>
+
+            <View style={styles.avatarGrid}>
+              {AVATAR_OPTIONS.map((opt) => (
+                <TouchableOpacity
+                  key={opt.key}
+                  style={[
+                    styles.avatarChoice,
+                    avatarKey === opt.key && styles.avatarChoiceSelected,
+                  ]}
+                  onPress={() => handleSelectAvatar(opt.key)}
+                >
+                  <Image source={opt.source} style={styles.avatarChoiceImage} />
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setAvatarModalVisible(false)}
+            >
+              <Text style={styles.modalCloseText}>Cancel</Text>
+            </TouchableOpacity>
+            
+          </View>
+        </View>
+      </Modal>
+</View>
     </SafeAreaView>
   );
 }
-
+// ========= 样式 =========
 const styles = StyleSheet.create({
+  // 外层 SafeArea，只负责占满 & 背景色
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#F7F7F7",
+  },
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
-    alignItems: 'center',
+    backgroundColor: "#F7F7F7",
+    paddingHorizontal: 10,
+    paddingTop: 20,
   },
   header: {
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: "700",
   },
   profileCard: {
-    backgroundColor: 'white',
-    borderRadius: 15,
-    padding: 20,
-    marginHorizontal: 20,
-    marginTop: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
-    width: '90%',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
   },
   avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    marginRight: 12,
+    backgroundColor: "#EEE",
   },
   profileInfo: {
     flex: 1,
-    marginLeft: 15,
   },
   profileName: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "600",
+    marginBottom: 4,
   },
   ratingContainer: {
-    flexDirection: 'row',
-    marginTop: 5,
+    flexDirection: "row",
+    alignItems: "center",
   },
-  reviewsText: {
-    color: '#FE8A0D',
-    fontSize: 14,
-  },
-
   section: {
-    backgroundColor: '#fff',
-    borderRadius: 15,
-    padding: 20,
-    marginHorizontal: 20,
-    marginTop: 20,
-    width: '90%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
+    marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
+    fontWeight: "600",
+    marginBottom: 10,
+  },
+   sectionTitleLogout: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 10,
+    color:"#d81f1fff"
   },
   iconGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexDirection: "row",
   },
   iconContainer: {
-    alignItems: 'center',
-    width: 80,
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
-  iconButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  iconButtonActive: {
-    backgroundColor: '#FFEEDB',
-  },
-    iconLabel1: {
-    marginTop:-10,
-    fontSize: 12,
-    color: '#224594',
-    textAlign: 'center',
+    iconContainerLogout: {
+    flex: 1,
+    backgroundColor: "#ffe3e3ff",
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   iconLabel: {
-    marginTop:-10,
-    fontSize: 12,
-    color: '#ac5e0bff',
-    textAlign: 'center',
+    marginTop: 4,
+    fontSize: 13,
+    color: "#444",
   },
-  badge: {
-    position: 'absolute',
-    top: -5,
-    right: -5,
-    backgroundColor: '#FF7E3E',
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1,
+
+  // ==== Modal 相关 ====
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  badgeText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: 'bold',
+  modalContent: {
+    width: "80%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 20,
   },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 15,
-    padding: 15,
-    marginHorizontal: 20,
-    marginTop: 20,
-    width: '90%',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    textAlign: "center",
+    marginBottom: 16,
   },
-  logoutText: {
-    color: '#D0021B',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 10,
+  avatarGrid: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 16,
   },
-  footer: {
-    marginTop: 'auto',
-    paddingBottom: 20,
-    alignItems: 'center',
+  avatarChoice: {
+    padding: 4,
+    borderRadius: 40,
   },
-  footerText: {
-    fontSize: 12,
-    color: '#999',
+  avatarChoiceSelected: {
+    borderWidth: 2,
+    borderColor: "#2f6fed",
   },
-  footerSubText: {
-    fontSize: 12,
-    color: '#999',
+  avatarChoiceImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+  },
+  modalCloseButton: {
+    alignSelf: "center",
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: "#EEE",
+  },
+  modalCloseText: {
+    fontSize: 14,
+    color: "#333",
   },
 });
