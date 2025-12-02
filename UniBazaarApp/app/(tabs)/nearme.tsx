@@ -64,9 +64,8 @@ export default function NearMeScreen() {
   const [showUserCard, setShowUserCard] = useState(false);
 
 
-  // -----------------------
-  // 位置权限
-  // -----------------------
+
+  // location allow
   useEffect(() => {
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -96,7 +95,7 @@ export default function NearMeScreen() {
 
       setLoading(false);
 
-      // 持续监听位置
+      // watch location
       watchSub.current = await Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.Balanced,
@@ -117,9 +116,8 @@ export default function NearMeScreen() {
     };
   }, []);
 
-  // -----------------------
-  // Firebase 商品
-  // -----------------------
+
+  // Firebase item
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "items"), (snap) => {
       const fetched = snap.docs.map((d) => ({
@@ -132,9 +130,8 @@ export default function NearMeScreen() {
     return () => unsub();
   }, []);
 
-  // -----------------------
+
   // Online presence
-  // -----------------------
   useEffect(() => {
     if (!me) return;
     if (!auth.currentUser) return;
@@ -164,9 +161,8 @@ export default function NearMeScreen() {
     };
   }, [me?.lat, me?.lon]);
 
-  // -----------------------
+
   // Listen online users
-  // -----------------------
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "presence"), (snap) => {
       const now = Date.now();
@@ -190,9 +186,7 @@ export default function NearMeScreen() {
     [region]
   );
 
-  // -----------------------
   // Loading
-  // -----------------------
   if (loading)
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -203,7 +197,7 @@ export default function NearMeScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      {/* ⭐ 顶部两个按钮 */}
+      {/* two button*/}
       <View
       pointerEvents="box-none"
         style={{
@@ -243,7 +237,7 @@ export default function NearMeScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* ⭐ 切换：显示地图 or 商品列表 */}
+      {/* onRegionChangeComplete */}
       {showList ? (
         <ItemsList items={items} />
       ) : (
@@ -253,7 +247,7 @@ export default function NearMeScreen() {
           region={myRegion}
           onRegionChangeComplete={setRegion}
           onPress={() => {
-            // 点击地图空白处，关闭所有卡片
+            // click outside close
             setShowUserCard(false);
             setSelectedItem(null);
           }}
@@ -291,7 +285,7 @@ export default function NearMeScreen() {
                 title={p.displayName || p.email}
                 calloutEnabled={false}
                 onPress={(e)=>{
-                    e.stopPropagation(); // 阻止事件冒泡到 MapView
+                    e.stopPropagation();
                     console.log("PEER ICON PRESSED:", p.uid);
                     setSelectedUser(p);
                     const userItems = items.filter((item) => item.sellerId === p.uid);
@@ -304,7 +298,7 @@ export default function NearMeScreen() {
         </MapView>
       )}
 
-  {/* ⭐ 用户信息卡片 */}
+  {/* user card */}
   {showUserCard && selectedUser && (
   <View
     style={{
@@ -340,7 +334,7 @@ export default function NearMeScreen() {
             width: 120,
           }}
           onPress={() => {
-            setSelectedItem(item); // 复用你已有的商品详情卡
+            setSelectedItem(item);
             setShowUserCard(false);
           }}
         >
@@ -366,7 +360,6 @@ export default function NearMeScreen() {
 )}
 
 
-      {/* ⭐ 底部商品卡片（仅地图模式显示） */}
       {!showList && selectedItem && (
         <View
           style={{
@@ -433,10 +426,8 @@ export default function NearMeScreen() {
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*                         ⭐ 列表组件（商品列表 UI）                         */
-/* -------------------------------------------------------------------------- */
 
+/* ui*/
 const ItemsList = ({ items }: { items: Item[] }) => (
   <FlatList
     data={items}
