@@ -18,8 +18,13 @@ export default function RootLayout() {
             <Stack.Screen name="login" />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="profile_pages" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="item/[id]"            
+              options={{ headerShown: false }}
+            />
             <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
           </Stack>
+
           <StatusBar style="auto" />
         </ThemeProvider>
       </FavoritesProvider>

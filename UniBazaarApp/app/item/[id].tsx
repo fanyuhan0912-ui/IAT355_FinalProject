@@ -210,6 +210,8 @@ export default function ItemDetailScreen() {
             <Ionicons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>
 
+      
+
           <TouchableOpacity
             style={styles.favoriteButton}
             onPress={() => toggleFavorite(item)}
@@ -311,21 +313,31 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: "absolute",
-    top: 14,
+    top: 50,
     left: 16,
     zIndex: 10,
     backgroundColor: "rgba(255,255,255,0.9)",
     padding: 8,
     borderRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 6,
   },
   favoriteButton: {
     position: "absolute",
-    top: 14,
+    top: 50,
     right: 16,
     zIndex: 10,
     backgroundColor: "rgba(255,255,255,0.9)",
     padding: 8,
     borderRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 6,
   },
 
   // 卖家 + 评分
@@ -333,8 +345,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+
     paddingHorizontal: 20,
-    marginTop: 16,
+    paddingVertical:20,
+  
+    
+    backgroundColor:"#E3F0FF"
   },
   sellerInfo: {
     flexDirection: "row",
@@ -377,7 +393,7 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-    fontSize: 22,
+    fontSize: 25,
     fontWeight: "700",
     marginRight: 12,
     color: "#111827",
@@ -391,7 +407,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F9FAFB",
   },
   categoryPillText: {
-    fontSize: 12,
+    fontSize: 15,
     color: "#4B5563",
     fontWeight: "500",
   },
@@ -438,11 +454,11 @@ const styles = StyleSheet.create({
   priceValue: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#111827",
+    color: "#224594",
   },
   chatButton: {
     flex: 1,
-    backgroundColor: "#111827", // 也可以换成你的蓝色 #2f6fed
+    backgroundColor: "#224594", 
     paddingVertical: 14,
     borderRadius: 999,
     alignItems: "center",
