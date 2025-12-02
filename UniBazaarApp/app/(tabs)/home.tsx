@@ -554,7 +554,6 @@ searchInput: {
     marginLeft: 4,
   },
 
-  /* 某分类里没有 item 时 */
   emptyInCategory: {
     paddingVertical: 40,
     alignItems: "center",
