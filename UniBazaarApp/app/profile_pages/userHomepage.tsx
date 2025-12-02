@@ -1,4 +1,3 @@
-// app/profile_pages/userHomepage.tsx
 import React, { useState, useEffect } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
