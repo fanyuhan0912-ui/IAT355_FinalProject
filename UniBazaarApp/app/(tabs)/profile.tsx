@@ -319,6 +319,7 @@ const styles = StyleSheet.create({
   },
   iconGrid: {
     flexDirection: "row",
+    gap:10,
   },
   iconContainer: {
     flex: 1,
@@ -327,7 +328,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 10,
+
     shadowColor: "#000",
     shadowOpacity: 0.04,
     shadowRadius: 4,
@@ -341,7 +342,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 10,
+   
     shadowColor: "#000",
     shadowOpacity: 0.04,
     shadowRadius: 4,
